@@ -225,6 +225,21 @@ class KeyFileTests(unittest.TestCase):
                          'https://api.z.ai/api/paas/v4/chat/completions')
         self.assertEqual(config.model, 'glm-test')
 
+    def test_default_coding_plan_model_and_url(self):
+        self.put(u'file-secret\n')
+        config = glm_config.load_config(self.path,
+                                        os.path.join(self.root, 'missing.env'))
+        self.assertEqual(config.api_url,
+                         'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions')
+        self.assertEqual(config.model, 'glm-5.3-flash')
+
+    def test_example_matches_default_config(self):
+        example = os.path.join(os.path.dirname(__file__), '..', '.env.example')
+        values = glm_config.load_env_file(example)
+        self.assertEqual(glm_config.completion_url(values['GLM_API_URL']),
+                         glm_config.DEFAULT_URL)
+        self.assertEqual(values['GLM_MODEL'], glm_config.DEFAULT_MODEL)
+
 
 if __name__ == '__main__':
     unittest.main()

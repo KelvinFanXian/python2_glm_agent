@@ -36,19 +36,21 @@ python agent.py --hermes-env /path/to/hermes/.env
 
 `.env` 文件只支持简单的 `KEY=VALUE` 行、可选的 `export` 前缀和成对引号；程序不会执行其中的 shell 脚本。可参考 [`.env.example`](.env.example)。如果 Hermes 使用其他配置格式，请把 key 放进环境变量。
 
-默认接口为 `https://open.bigmodel.cn/api/paas/v4/chat/completions`，默认模型为 `glm-4.6`。如果 Hermes 的 key 属于其他 GLM 接口，请使用其对应的完整地址和模型名：
+默认接口为 Coding Plan 的 `https://open.bigmodel.cn/api/coding/paas/v4/chat/completions`，默认模型为 `glm-5.3-flash`。使用前请确认你的 key 有 Coding Plan 权限。如果 Hermes 的 key 属于其他 GLM 接口，请使用其对应的地址和模型名：
 
 ```sh
-python agent.py --api-url 'https://api.z.ai/api/paas/v4/chat/completions' --model glm-4.6
+python agent.py --api-url 'https://api.z.ai/api/paas/v4/chat/completions' --model glm-5.3-flash
 ```
 
 如果 Hermes 使用 **GLM Coding Plan**，请使用 Hermes 中配置的 Coding Plan 地址，例如国内地址：
 
 ```sh
-python agent.py --api-url 'https://open.bigmodel.cn/api/coding/paas/v4' --model glm-4.6
+python agent.py --api-url 'https://open.bigmodel.cn/api/coding/paas/v4' --model glm-5.3-flash
 ```
 
 也可设置 `GLM_API_URL` 和 `GLM_MODEL` 环境变量。GLM 地址可写到 `/v4` 或完整的 `/chat/completions`。命令行参数优先。key 必须与所选平台和接口匹配；实际可用模型取决于账户。接口请求格式可参考 [Z.AI 官方示例](https://docs.z.ai/guides/capabilities/mcp-call)。
+
+模型代码 `glm-5.3-flash` 和 Coding Plan 可用性见 [Z.AI 模型文档](https://docs.z.ai/guides/vlm/glm-5.3-flash)；国内 Coding Plan 的专用地址可参考 [ZCode 配置文档](https://zcode.z.ai/cn/docs/configuration)。
 
 ## 使用
 
@@ -123,6 +125,6 @@ python2_glm_agent/
 python2.7 -m unittest discover -s tests
 ```
 
-目前 13 项离线测试已在开发环境通过。该环境只有 Python 3，因此使用 `lib2to3` 转换源码后执行测试，同时检查 Python 2 语法。尚未在真实 Python 2.7 解释器、目标 iMac 或 Hermes 实际配置上完成连通测试。
+目前 15 项离线测试已在开发环境通过。该环境只有 Python 3，因此使用 `lib2to3` 转换源码后执行测试，同时检查 Python 2 语法。尚未在真实 Python 2.7 解释器、目标 iMac 或 Hermes 实际配置上完成连通测试。
 
 分享到 GitHub 前请检查 `git status`，确认没有暂存真实 key、终端日志或个人配置文件。`.env.example` 只包含占位符。

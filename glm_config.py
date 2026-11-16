@@ -7,8 +7,8 @@ import re
 from urlparse import urlparse
 
 
-DEFAULT_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
-DEFAULT_MODEL = 'glm-4.6'
+DEFAULT_URL = 'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions'
+DEFAULT_MODEL = 'glm-5.3-flash'
 
 
 def to_unicode(value):

@@ -59,8 +59,8 @@ python2.7 agent.py --hermes-env .env --workspace /path/to/your/project
 
 ```text
 GLM_API_KEY=你的真实key
-GLM_API_URL=https://open.bigmodel.cn/api/paas/v4
-GLM_MODEL=glm-4.6
+GLM_API_URL=https://open.bigmodel.cn/api/coding/paas/v4
+GLM_MODEL=glm-5.3-flash
 ```
 
 修改 `.env` 中的地址和模型时，以 Hermes 已经能正常使用的配置为准。程序不会自动读取项目目录里的 `.env`，因此启动时须显式传 `--hermes-env .env`。
@@ -97,10 +97,10 @@ OPENAI_BASE_URL=https://open.bigmodel.cn/api/paas/v4
 ```sh
 python2.7 agent.py --hermes-env /path/to/hermes/.env \
   --api-url 'https://open.bigmodel.cn/api/coding/paas/v4' \
-  --model glm-4.6 --workspace /path/to/your/project
+  --model glm-5.3-flash --workspace /path/to/your/project
 ```
 
-地址可以只写到 `/v4`，程序会补上 `/chat/completions`。默认是智谱国内通用 API，模型默认是 `glm-4.6`。如果收到 HTTP 401、403 或模型错误，先核对 Hermes 中实际使用的 key、地址、模型和套餐。
+地址可以只写到 `/v4`，程序会补上 `/chat/completions`。默认是智谱国内 Coding Plan 地址，模型默认是 `glm-5.3-flash`。如果收到 HTTP 401、403 或模型错误，先核对 Hermes 中实际使用的 key、地址、模型和套餐。
 
 ## 提交到 GitHub 前检查
 

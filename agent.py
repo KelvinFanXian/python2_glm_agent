@@ -54,7 +54,7 @@ def main():
     parser.add_argument('--key-file', help='只包含一行 GLM key 的文件绝对路径')
     parser.add_argument('--hermes-env', help='Hermes 的 .env 文件路径')
     parser.add_argument('--api-url', help='完整的 chat/completions 接口地址')
-    parser.add_argument('--model', help='GLM 模型名，例如 glm-4.6')
+    parser.add_argument('--model', help='GLM 模型名，例如 glm-5.3-flash')
     parser.add_argument('--workspace', default='.', help='允许操作的项目目录，默认为当前目录')
     args = parser.parse_args()
 
