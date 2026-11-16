@@ -165,5 +165,30 @@ class ApiTests(unittest.TestCase):
                           u'test-key', 'glm-4.6', [])
 
 
+class KeyFileTests(unittest.TestCase):
+    def setUp(self):
+        self.root = tempfile.mkdtemp()
+        self.path = os.path.join(self.root, 'key')
+
+    def tearDown(self):
+        shutil.rmtree(self.root)
+
+    def put(self, value):
+        with io.open(self.path, 'w', encoding='utf-8') as stream:
+            stream.write(value)
+
+    def test_reads_single_raw_key_from_absolute_path(self):
+        self.put(u'example-id.example-secret\n')
+        self.assertEqual(agent.load_key_file(self.path),
+                         u'example-id.example-secret')
+
+    def test_rejects_relative_path_and_env_format(self):
+        self.assertRaises(ValueError, agent.load_key_file, 'key')
+        self.put(u'GLM_API_KEY=example-secret\n')
+        self.assertRaises(ValueError, agent.load_key_file, self.path)
+        self.put(u'first\nsecond\n')
+        self.assertRaises(ValueError, agent.load_key_file, self.path)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -6,7 +6,7 @@
 
 ## 运行
 
-首次配置 GLM key，请按 [GLM API Key 配置指南](docs/GLM_KEY_SETUP.md) 操作。支持当前终端环境变量、本地 `.env` 和直接读取 Hermes 的 `.env`。
+首次配置 GLM key，请按 [GLM API Key 配置指南](docs/GLM_KEY_SETUP.md) 操作。推荐把 key 单独存成一个本机文件，并通过绝对路径传给程序；也支持环境变量和 Hermes 的 `.env`。
 
 在终端检查版本：
 
@@ -15,12 +15,14 @@ cd python2_glm_agent
 python --version
 ```
 
-需要 Python 2.7。把 Hermes 使用的同一个 GLM key 放入当前终端环境：
+需要 Python 2.7。把 Hermes 使用的同一个 GLM key 单独写入本机文件，然后传入**绝对路径**：
 
 ```sh
-export GLM_API_KEY='你的 Hermes GLM key'
-python agent.py --workspace /path/to/your/project
+python2.7 agent.py --key-file /Users/你的用户名/.config/glm-agent/key \
+  --workspace /path/to/your/project
 ```
+
+key 文件只放一行纯 key，不写 `GLM_API_KEY=`。建议放在 Git 仓库外，并设置权限 `chmod 600 /Users/你的用户名/.config/glm-agent/key`。
 
 如果 Hermes 已把 key 写在 `.env` 文件中，可直接指定该文件（支持 `GLM_API_KEY`、`ZAI_API_KEY`、`ZHIPUAI_API_KEY`、`HERMES_API_KEY`；当 `OPENAI_BASE_URL` 指向 GLM 时也支持 `OPENAI_API_KEY`）：
 
@@ -28,7 +30,7 @@ python agent.py --workspace /path/to/your/project
 python agent.py --hermes-env /path/to/hermes/.env
 ```
 
-默认还会查找 `~/.hermes/.env` 与 `~/.config/hermes/.env`。不会修改 Hermes 的配置文件，也不会复制 key 到本项目。
+默认还会查找 `~/.hermes/.env` 与 `~/.config/hermes/.env`。`--key-file` 优先于这些配置。程序不会修改 Hermes 的配置文件，也不会复制 key 到本项目。
 
 `.env` 文件只支持简单的 `KEY=VALUE` 行、可选的 `export` 前缀和成对引号；程序不会执行其中的 shell 脚本。可参考 [`.env.example`](.env.example)。如果 Hermes 使用其他配置格式，请把 key 放进环境变量。
 
@@ -111,6 +113,6 @@ python2_glm_agent/
 python2.7 -m unittest discover -s tests
 ```
 
-目前 10 项离线测试已在开发环境通过。该环境只有 Python 3，因此使用 `lib2to3` 转换源码后执行测试，同时检查 Python 2 语法。尚未在真实 Python 2.7 解释器、目标 iMac 或 Hermes 实际配置上完成连通测试。
+目前 12 项离线测试已在开发环境通过。该环境只有 Python 3，因此使用 `lib2to3` 转换源码后执行测试，同时检查 Python 2 语法。尚未在真实 Python 2.7 解释器、目标 iMac 或 Hermes 实际配置上完成连通测试。
 
 分享到 GitHub 前请检查 `git status`，确认没有暂存真实 key、终端日志或个人配置文件。`.env.example` 只包含占位符。

@@ -90,6 +90,27 @@ def find_key(files):
     return None
 
 
+def load_key_file(path):
+    """Read one raw API key from an absolute path, without logging its value."""
+    if not os.path.isabs(path):
+        raise ValueError('key 文件路径必须是绝对路径')
+    if not os.path.isfile(path):
+        raise ValueError('key 文件不存在')
+    if os.path.getsize(path) > 4096:
+        raise ValueError('key 文件过大')
+    try:
+        with io.open(path, 'r', encoding='utf-8') as stream:
+            value = stream.read().strip()
+    except (IOError, OSError, UnicodeError):
+        raise ValueError('无法读取 key 文件；请确认它是 UTF-8 文本')
+    if (not value or len(value.splitlines()) != 1 or
+            any(char.isspace() for char in value) or
+            value.startswith(('GLM_API_KEY=', 'OPENAI_API_KEY=',
+                              'ZAI_API_KEY=', 'ZHIPUAI_API_KEY='))):
+        raise ValueError('key 文件须只包含一行纯 key')
+    return value
+
+
 def is_glm_url(url):
     parsed = urlparse(url)
     host = parsed.hostname or ''
@@ -212,6 +233,7 @@ def agent_turn(api_url, key, model, messages, project):
 
 def main():
     parser = argparse.ArgumentParser(description='Python 2.7 GLM chat/coding agent')
+    parser.add_argument('--key-file', help='只包含一行 GLM key 的文件绝对路径')
     parser.add_argument('--hermes-env', help='Hermes 的 .env 文件路径')
     parser.add_argument('--api-url', help='完整的 chat/completions 接口地址')
     parser.add_argument('--model', help='GLM 模型名，例如 glm-4.6')
@@ -221,9 +243,12 @@ def main():
     paths = [args.hermes_env] if args.hermes_env else [
         '~/.hermes/.env', '~/.config/hermes/.env']
     files = [load_env_file(os.path.expanduser(path)) for path in paths]
-    key = find_key(files)
+    try:
+        key = load_key_file(args.key_file) if args.key_file else find_key(files)
+    except ValueError as exc:
+        parser.error(str(exc))
     if not key:
-        parser.error('没有找到 GLM key；设置 GLM_API_KEY，或用 --hermes-env 指向 Hermes 的 .env')
+        parser.error('没有找到 GLM key；使用 --key-file 指向 key 文件绝对路径')
     api_url = completion_url(args.api_url or config_value('GLM_API_URL', files)
                              or glm_openai_url(files) or DEFAULT_URL)
     model = args.model or config_value('GLM_MODEL', files) or 'glm-4.6'

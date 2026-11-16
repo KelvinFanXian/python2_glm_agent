@@ -15,7 +15,15 @@ python -c 'import ssl; print ssl.OPENSSL_VERSION'
 
 ## 2. 放置项目并配置密钥
 
-把整个 `python2_glm_agent` 目录复制到 iMac。进入目录后，任选一种方式：
+把整个 `python2_glm_agent` 目录复制到 iMac。推荐把纯 key 单独放在仓库外的文件中，然后传绝对路径：
+
+```sh
+chmod 600 /Users/你的用户名/.config/glm-agent/key
+python2.7 agent.py --key-file /Users/你的用户名/.config/glm-agent/key \
+  --workspace /path/to/project
+```
+
+key 文件仅包含一行 key，不含 `GLM_API_KEY=`。也可以选择环境变量方式：
 
 ```sh
 export GLM_API_KEY='你的 GLM key'
