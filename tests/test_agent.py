@@ -10,6 +10,9 @@ import tempfile
 import unittest
 
 import agent
+import agent_core
+import glm_client
+import glm_config
 from project_tools import ProjectTools, SCHEMAS
 
 
@@ -77,40 +80,46 @@ class AgentLoopTests(unittest.TestCase):
         with io.open(os.path.join(self.root, 'sample.txt'), 'w',
                      encoding='utf-8') as stream:
             stream.write(u'hello')
-        self.old_chat = agent.chat
         self.old_display = agent.display
         agent.display = lambda value: None
 
     def tearDown(self):
-        agent.chat = self.old_chat
         agent.display = self.old_display
         shutil.rmtree(self.root)
 
+    def client_with(self, replies):
+        class FakeClient(object):
+            def __init__(self, items):
+                self.items = iter(items)
+
+            def chat(self, messages):
+                return next(self.items)
+
+        return FakeClient(replies)
+
     def test_tool_call_then_final_answer(self):
-        replies = iter([
+        client = self.client_with([
             {'role': 'assistant', 'content': None, 'tool_calls': [
                 {'id': 'call_1', 'type': 'function', 'function': {
                     'name': 'read_file', 'arguments': '{"path":"sample.txt"}'}}]},
             {'role': 'assistant', 'content': u'读取完成'}])
-        agent.chat = lambda *args: next(replies)
         messages = [{'role': 'system', 'content': u'helper'},
                     {'role': 'user', 'content': u'读取文件'}]
-        self.assertEqual(agent.agent_turn('url', 'key', 'model', messages,
-                                          self.project), u'读取完成')
+        self.assertEqual(agent_core.agent_turn(client, messages, self.project),
+                         u'读取完成')
         self.assertEqual(messages[-2]['role'], 'tool')
         self.assertEqual(messages[-2]['tool_call_id'], 'call_1')
         self.assertEqual(messages[-2]['content'], u'hello')
 
     def test_bad_tool_arguments_return_error_to_model(self):
-        replies = iter([
+        client = self.client_with([
             {'role': 'assistant', 'content': None, 'tool_calls': [
                 {'id': 'call_2', 'type': 'function', 'function': {
                     'name': 'read_file', 'arguments': '{bad json'}}]},
             {'role': 'assistant', 'content': u'参数有误'}])
-        agent.chat = lambda *args: next(replies)
         messages = [{'role': 'system', 'content': u'helper'},
                     {'role': 'user', 'content': u'读取文件'}]
-        agent.agent_turn('url', 'key', 'model', messages, self.project)
+        agent_core.agent_turn(client, messages, self.project)
         self.assertIn(u'工具错误', messages[-2]['content'])
 
     def test_save_stays_in_workspace(self):
@@ -122,10 +131,10 @@ class AgentLoopTests(unittest.TestCase):
 
 class ApiTests(unittest.TestCase):
     def setUp(self):
-        self.old_urlopen = agent.urllib2.urlopen
+        self.old_urlopen = glm_client.urllib2.urlopen
 
     def tearDown(self):
-        agent.urllib2.urlopen = self.old_urlopen
+        glm_client.urllib2.urlopen = self.old_urlopen
 
     def test_request_includes_six_tools_and_messages(self):
         seen = {}
@@ -143,9 +152,11 @@ class ApiTests(unittest.TestCase):
             seen['timeout'] = timeout
             return Response()
 
-        agent.urllib2.urlopen = fake_urlopen
-        message = agent.chat(agent.DEFAULT_URL, u'test-key', 'glm-4.6',
-                             [{'role': 'user', 'content': u'你好'}])
+        glm_client.urllib2.urlopen = fake_urlopen
+        config = glm_config.GlmConfig(u'test-key', glm_config.DEFAULT_URL,
+                                      'glm-4.6')
+        message = glm_client.GlmClient(config, SCHEMAS).chat(
+            [{'role': 'user', 'content': u'你好'}])
         self.assertEqual(message['content'], u'hello')
         self.assertEqual(seen['body']['messages'][0]['content'], u'你好')
         self.assertEqual(len(seen['body']['tools']), 6)
@@ -160,17 +171,29 @@ class ApiTests(unittest.TestCase):
             def close(self):
                 pass
 
-        agent.urllib2.urlopen = lambda request, timeout: Response()
-        self.assertRaises(RuntimeError, agent.chat, agent.DEFAULT_URL,
-                          u'test-key', 'glm-4.6', [])
+        glm_client.urllib2.urlopen = lambda request, timeout: Response()
+        config = glm_config.GlmConfig(u'test-key', glm_config.DEFAULT_URL,
+                                      'glm-4.6')
+        self.assertRaises(RuntimeError, glm_client.GlmClient(config, SCHEMAS).chat, [])
 
 
 class KeyFileTests(unittest.TestCase):
     def setUp(self):
         self.root = tempfile.mkdtemp()
         self.path = os.path.join(self.root, 'key')
+        names = ('GLM_API_KEY', 'ZAI_API_KEY', 'ZHIPUAI_API_KEY',
+                 'HERMES_API_KEY', 'GLM_MODEL', 'GLM_API_URL',
+                 'OPENAI_BASE_URL', 'OPENAI_API_KEY')
+        self.old_env = dict((name, os.environ.get(name)) for name in names)
+        for name in names:
+            os.environ.pop(name, None)
 
     def tearDown(self):
+        for name, value in self.old_env.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
         shutil.rmtree(self.root)
 
     def put(self, value):
@@ -179,15 +202,28 @@ class KeyFileTests(unittest.TestCase):
 
     def test_reads_single_raw_key_from_absolute_path(self):
         self.put(u'example-id.example-secret\n')
-        self.assertEqual(agent.load_key_file(self.path),
+        self.assertEqual(glm_config.load_key_file(self.path),
                          u'example-id.example-secret')
 
     def test_rejects_relative_path_and_env_format(self):
-        self.assertRaises(ValueError, agent.load_key_file, 'key')
+        self.assertRaises(ValueError, glm_config.load_key_file, 'key')
         self.put(u'GLM_API_KEY=example-secret\n')
-        self.assertRaises(ValueError, agent.load_key_file, self.path)
+        self.assertRaises(ValueError, glm_config.load_key_file, self.path)
         self.put(u'first\nsecond\n')
-        self.assertRaises(ValueError, agent.load_key_file, self.path)
+        self.assertRaises(ValueError, glm_config.load_key_file, self.path)
+
+    def test_config_prefers_key_file_and_uses_env_model(self):
+        self.put(u'file-secret\n')
+        env_path = os.path.join(self.root, '.env')
+        with io.open(env_path, 'w', encoding='utf-8') as stream:
+            stream.write(u'GLM_API_KEY=env-secret\n'
+                         u'GLM_API_URL=https://api.z.ai/api/paas/v4\n'
+                         u'GLM_MODEL=glm-test\n')
+        config = glm_config.load_config(self.path, env_path)
+        self.assertEqual(config.key, u'file-secret')
+        self.assertEqual(config.api_url,
+                         'https://api.z.ai/api/paas/v4/chat/completions')
+        self.assertEqual(config.model, 'glm-test')
 
 
 if __name__ == '__main__':

@@ -93,15 +93,21 @@ Python 2.7 已停止维护。请只在明确需要兼容旧系统的机器上使
 
 ## 项目文件
 
+模块分工和调用流程见 [代码结构说明](docs/ARCHITECTURE.md)。
+
 ```text
 python2_glm_agent/
-├── agent.py             # 对话与工具调用循环
-├── project_tools.py     # 项目文件和命令工具
-├── .env.example         # 不含真实密钥的配置示例
-├── .gitignore           # 忽略本地密钥文件与日志
-├── docs/IMAC_SETUP.md   # 旧 iMac 安装与排错
+├── agent.py              # 命令行入口
+├── glm_config.py         # key、模型和接口地址
+├── glm_client.py         # GLM HTTP 连接
+├── agent_core.py         # 对话与工具调用循环
+├── project_tools.py      # 项目文件和命令工具
+├── .env.example          # 不含真实密钥的配置示例
+├── .gitignore            # 忽略本地密钥文件与日志
+├── docs/ARCHITECTURE.md  # 模块分工和调用流程
+├── docs/IMAC_SETUP.md    # 旧 iMac 安装与排错
 ├── docs/GLM_KEY_SETUP.md # GLM key 配置步骤
-├── tests/test_agent.py  # 不联网的工具和接口格式测试
+├── tests/test_agent.py   # 不联网的工具和接口格式测试
 └── README.md
 ```
 
@@ -113,6 +119,6 @@ python2_glm_agent/
 python2.7 -m unittest discover -s tests
 ```
 
-目前 12 项离线测试已在开发环境通过。该环境只有 Python 3，因此使用 `lib2to3` 转换源码后执行测试，同时检查 Python 2 语法。尚未在真实 Python 2.7 解释器、目标 iMac 或 Hermes 实际配置上完成连通测试。
+目前 13 项离线测试已在开发环境通过。该环境只有 Python 3，因此使用 `lib2to3` 转换源码后执行测试，同时检查 Python 2 语法。尚未在真实 Python 2.7 解释器、目标 iMac 或 Hermes 实际配置上完成连通测试。
 
 分享到 GitHub 前请检查 `git status`，确认没有暂存真实 key、终端日志或个人配置文件。`.env.example` 只包含占位符。
