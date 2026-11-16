@@ -2,6 +2,8 @@
 
 本文针对 2009 年的 iMac。能否运行主要取决于机器上实际安装的 macOS、Python 和 OpenSSL，而不是 iMac 的年份。
 
+本项目特意选用 Python 2.7 标准库中的老接口（`urllib2`、`json`、`io`、`subprocess`）实现客户端，不安装新版 GLM SDK，也不要求 Python 3。**服务端 GLM API 地址仍须是当前有效的地址**；旧客户端代码不能绕过 HTTPS/TLS 或证书要求。
+
 ## 1. 检查运行环境
 
 打开“终端”，运行：

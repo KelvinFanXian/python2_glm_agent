@@ -2,6 +2,8 @@
 
 为旧款 Mac 准备的命令行聊天与代码生成工具。只使用 Python 2.7 标准库，不需要 pip 安装依赖。
 
+**旧机器兼容是本项目的首要约束。** 客户端刻意使用 Python 2.7 时代已有的标准库 API，例如 `urllib2.Request` / `urllib2.urlopen`、`json`、`io` 和 `subprocess`。代码不依赖新版 GLM SDK、`asyncio`、类型注解或 f-string，因此可以在具备合适 Python 2.7 与 TLS 环境的旧 iMac 上运行。这里的“旧 API”指本机 Python 调用方式；连接 GLM 时仍需使用账户当前可用的 Chat Completions HTTP 地址。
+
 当前支持连续聊天、查看和搜索项目文件、修改代码、运行命令，以及把生成的代码保存到本地。模型通过 GLM 的函数调用格式选择工具；文件工具限制在指定工作目录内。
 
 ## 运行
@@ -84,6 +86,8 @@ python agent.py --api-url 'https://open.bigmodel.cn/api/coding/paas/v4' --model 
 对话只保存在进程内存中，退出后不会持久化。生成和修改的代码由模型提供，请检查改动。`/save` 和项目工具的文件路径都相对于 `--workspace`。
 
 ## 旧 iMac 注意事项
+
+兼容策略是尽量降低**客户端软件依赖**：Python 2.7 标准库直接发 HTTP 请求，不要求安装现代 SDK 或 Python 3。它不能替代服务端要求的 TLS 支持；即使代码使用旧版 Python API，机器上的 OpenSSL 和证书仍须能与 GLM 服务建立安全连接。
 
 Python 2.7 自带的 `urllib2` 会使用该解释器链接的 OpenSSL。过旧的 macOS / Python 构建可能无法与 GLM 服务器协商当前要求的 TLS 协议，表现为 SSL 握手失败。此时需要在该机器上安装带较新 OpenSSL 的 Python 2.7，或让请求经由受信任的现代代理。程序不会主动关闭证书校验；但部分早期 Python 2.7 构建默认不验证 HTTPS 证书，建议使用 Python 2.7.9 或更高版本。
 
